@@ -1,3 +1,4 @@
+import time
 from datetime import date,datetime
 from flask import Flask, abort, render_template, redirect, url_for, flash, request
 from flask_bootstrap import Bootstrap5
@@ -11,9 +12,12 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 # Optional: add contact me email functionality (Day 60)
-# import smtplib
+import smtplib
 from dotenv import load_dotenv
 import os
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
 
 load_dotenv()
 
@@ -271,24 +275,72 @@ def contact():
 # DON'T put your email and password here directly! The code will be visible when you upload to Github.
 # Use environment variables instead (Day 35)
 
-# MAIL_ADDRESS = os.getenv("EMAIL_KEY")
-# MAIL_APP_PW = os.getenv("PASSWORD_KEY")
+MAIL_ADDRESS = os.getenv("EMAIL_KEY")
+MAIL_APP_PW = os.getenv("PASSWORD_KEY")
 
-# @app.route("/contact", methods=["GET", "POST"])
-# def contact():
-#     if request.method == "POST":
-#         data = request.form
-#         send_email(data["name"], data["email"], data["phone"], data["message"])
-#         return render_template("contact.html", msg_sent=True)
-#     return render_template("contact.html", msg_sent=False)
-#
-#
-# def send_email(name, email, phone, message):
-#     email_message = f"Subject:New Message\n\nName: {name}\nEmail: {email}\nPhone: {phone}\nMessage:{message}"
-#     with smtplib.SMTP("smtp.gmail.com") as connection:
-#         connection.starttls()
-#         connection.login(MAIL_ADDRESS, MAIL_APP_PW)
-#         connection.sendmail(MAIL_ADDRESS, MAIL_APP_PW, email_message)
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        data = request.form
+        send_email(data["name"], data["email"], data["phone"], data["message"])
+        return render_template("contact.html", msg_sent=True)
+    return render_template("contact.html", msg_sent=False)
+
+
+def send_email(name, email, phone, message):
+    # Message that goes to YOU
+    email_message = f"""Subject: New Message
+
+    Name: {name}
+    Email: {email}
+    Phone: {phone}
+    Message: {message}
+    """
+
+    # HTML confirmation message for the visitor
+    confirmation_html = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; color: #333;">
+        <h2 style="color: #2c3e50;">Thank You, {name}!</h2>
+        <p>We’ve received your message and will get back to you soon.</p>
+        <p><strong>Your details:</strong></p>
+        <ul>
+          <li>Email: {email}</li>
+          <li>Phone: {phone}</li>
+          <li>Message: {message}</li>
+        </ul>
+        <p style="margin-top:20px;">Best regards,<br><em>Olaleke’s Blog Team</em></p>
+        <hr>
+        <p style="font-size:12px; color:#888;">This is an automated confirmation email. Please do not reply.</p>
+      </body>
+    </html>
+    """
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as connection:
+        connection.starttls()
+        connection.login(MAIL_ADDRESS, MAIL_APP_PW)
+
+        # Send the visitor’s message to YOU (plain text is fine here)
+        connection.sendmail(
+            from_addr=MAIL_ADDRESS,
+            to_addrs=MAIL_ADDRESS,
+            msg=email_message
+        )
+        time.sleep(10)
+        # Send confirmation back to the visitor (HTML email)
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Thank You for Contacting Us!"
+        msg["From"] = MAIL_ADDRESS
+        msg["To"] = email
+
+        # Attach HTML content
+        msg.attach(MIMEText(confirmation_html, "html"))
+
+        connection.sendmail(
+            from_addr=MAIL_ADDRESS,
+            to_addrs=email,
+            msg=msg.as_string()
+        )
 
 
 if __name__ == "__main__":
