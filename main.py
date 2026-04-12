@@ -275,8 +275,8 @@ def contact():
 # DON'T put your email and password here directly! The code will be visible when you upload to Github.
 # Use environment variables instead (Day 35)
 
-MAIL_ADDRESS = os.getenv("EMAIL_KEY")
-MAIL_APP_PW = os.getenv("PASSWORD_KEY")
+MAIL_ADDRESS = os.getenv("EMAIL_ADDRESS")
+MAIL_APP_PW = os.getenv("EMAIL_KEY")
 
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
@@ -309,7 +309,7 @@ def send_email(name, email, phone, message):
           <li>Phone: {phone}</li>
           <li>Message: {message}</li>
         </ul>
-        <p style="margin-top:20px;">Best regards,<br><em>Olaleke’s Blog Team</em></p>
+        <p style="margin-top:20px;">Best regards,<br><em>Lawrence’s Blog Team</em></p>
         <hr>
         <p style="font-size:12px; color:#888;">This is an automated confirmation email. Please do not reply.</p>
       </body>
